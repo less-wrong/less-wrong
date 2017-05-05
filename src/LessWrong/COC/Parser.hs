@@ -53,7 +53,7 @@ parseTerm :: Text -> Either CalculusError Term
 parseTerm txt =
   case parse term "(source)" txt of
     Right term -> Right term
-    Left  err  -> Left . ParsingError . pack $ parseErrorPretty err
+    Left  err  -> Left . ParsingError $ parseErrorPretty err
 
 term :: Parser Term
 term = foldl1 App <$> some naturalTerm
