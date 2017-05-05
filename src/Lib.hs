@@ -6,9 +6,9 @@ import           Control.Monad
 import           Data.Text                (pack)
 import           System.Console.Haskeline
 
-import           LessWrong.Term
-import           LessWrong.Term.Parser
-import           LessWrong.Term.Pretty
+import           LessWrong.COC.Type
+import           LessWrong.COC.Eval
+import           LessWrong.COC.Parser
 
 repl' :: InputT IO ()
 repl' = do inputMb <- getInputLine "> "
@@ -17,8 +17,9 @@ repl' = do inputMb <- getInputLine "> "
              Just input -> do
                case parseTerm (pack input) of
                  Right term -> do
-                   outputStrLn $ "Term:    " ++ pretty term
-                   outputStrLn $ "Reduced: " ++ pretty (reduce term)
+                   outputStrLn $ "Term:    " ++ show term
+                   let rterm = reduce term
+                   outputStrLn $ "Reduced: " ++ show rterm
                  Left err ->
                    outputStrLn $ show err
                repl'
