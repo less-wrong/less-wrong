@@ -11,8 +11,8 @@ instance Eq Term where
   Const a == Const b         = a == b
   Var a == Var b             = a == b
   App a b == App a' b'       = a == a' && b == b'
-  Pi v t b == Pi v' t' b'    = t == t' && b == substitute b v' (Var v)
-  Lam v t b == Lam v' t' b'  = t == t' && b == substitute b v' (Var v)
+  Pi v t b == Pi v' t' b'    = t == t' && b == substitute b' v' (Var v)
+  Lam v t b == Lam v' t' b'  = t == t' && b == substitute b' v' (Var v)
   _ == _                     = False
 
 free :: Term -> Set Var
