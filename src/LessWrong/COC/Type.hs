@@ -23,4 +23,4 @@ data Term = Const { uni  :: Const } -- * | □
   deriving (Show, Read)
 
 noname :: Var
-noname = V (pack "")
+noname = V (pack "_")

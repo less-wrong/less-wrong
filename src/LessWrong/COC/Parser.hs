@@ -1,10 +1,10 @@
 module LessWrong.COC.Parser where
 
 import           Control.Applicative   (some, (<|>))
-import           Control.Monad
+import           Control.Monad         (void)
 import           Data.Text             (Text, pack)
 import           Text.Megaparsec       (between, letterChar, parse,
-                                        parseErrorPretty, spaceChar)
+                                        parseErrorPretty, spaceChar, try)
 import           Text.Megaparsec.Lexer (skipBlockComment, skipLineComment,
                                         space)
 import qualified Text.Megaparsec.Lexer as L (lexeme, symbol)
@@ -61,20 +61,23 @@ term = foldl1 App <$> some naturalTerm
 naturalTerm :: Parser Term
 naturalTerm = parens term <|> lambdaTerm <|> piTerm <|> varTerm <|> uniTerm
 
-applicationTerm :: Parser Term
-applicationTerm = undefined
-
 lambdaTerm :: Parser Term
 lambdaTerm = quaTerm lambda Lam
 
 piTerm :: Parser Term
 piTerm = quaTerm forall Pi
 
+simplePiTerm :: Parser Term
+simplePiTerm = do from <- naturalTerm
+                  arrow
+                  to <- naturalTerm
+                  pure $ Pi noname from to
+
 quaTerm :: Parser () -> (Var -> Term -> Term -> Term) -> Parser Term
 quaTerm start f = do start
                      (var, tpe) <- parens $ (,) <$> variable <* delimiter <*> term
                      arrow
-                     body <- term
+                     body <- try simplePiTerm <|> term
                      pure $ f var tpe body
 
 varTerm :: Parser Term
