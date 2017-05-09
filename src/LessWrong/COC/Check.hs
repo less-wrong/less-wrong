@@ -31,7 +31,7 @@ typeWith ctx Pi{..}    = do aTpe <- (reduce <$> typeWith ctx tpe) >>= typeConst
 typeWith ctx App{..}   = do algTpe <- reduce <$> typeWith ctx (reduce alg)
                             case algTpe of
                               Pi{..} -> pure ()
-                              _      -> throwE $ InvalidType algTpe
+                              _      -> throwE $ InvalidType algTpe "not a Pi-type in application algo"
                             datTpe <- reduce <$> typeWith ctx dat
                             when (tpe algTpe /= datTpe) $
                               throwE $ CannotEqualize (tpe algTpe) datTpe
@@ -45,7 +45,7 @@ typeCheck tpe term = do tpe' <- typeOf term
 
 typeConst :: Term -> Except CalculusError Const
 typeConst (Const x) = pure x
-typeConst a         = throwE $ InvalidType a
+typeConst a         = throwE $ InvalidType a "non-universe type"
 
 typeRule :: Const -> Const -> Term
 typeRule Star Star = Const Star

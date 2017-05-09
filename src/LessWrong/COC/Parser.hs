@@ -45,7 +45,7 @@ delimiter :: Parser ()
 delimiter = void $ symbol ":"
 
 variable :: Parser Var
-variable = lexeme (V . pack <$> some letterChar)
+variable = lexeme (V . pack <$> (some letterChar <|> symbol "_"))
 
 -- Parser
 
@@ -68,9 +68,9 @@ piTerm :: Parser Term
 piTerm = quaTerm forall Pi
 
 simplePiTerm :: Parser Term
-simplePiTerm = do from <- naturalTerm
+simplePiTerm = do from <- term
                   arrow
-                  to <- naturalTerm
+                  to <- try simplePiTerm <|> term
                   pure $ Pi noname from to
 
 quaTerm :: Parser () -> (Var -> Term -> Term -> Term) -> Parser Term
