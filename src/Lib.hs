@@ -9,7 +9,7 @@ import           Control.Monad.Trans.Except
 import           Control.Monad.Trans.State
 import           Data.Char                  (isSpace)
 import           Data.List                  (break, dropWhile, dropWhileEnd,
-                                             foldl', isPrefixOf)
+                                             foldl', isPrefixOf, deleteBy)
 import           Data.Text                  (pack)
 import           System.Console.Haskeline
 
@@ -34,14 +34,17 @@ termAndType txt ctx =
 strip :: String -> String
 strip = dropWhile isSpace . dropWhileEnd isSpace
 
-processInput :: String -> StateT TermContext (InputT IO) (String, String, Term -> StateT TermContext (InputT IO) ())
+modifyCtx :: Monad m => Var -> Term -> StateT TermContext m ()
+modifyCtx v t = do ctx <- get
+                   put $ (v, t) : deleteBy (\x y -> fst x == fst y) (v, undefined) ctx
+
+processInput :: Monad m => String -> StateT TermContext m (String, String, Term -> StateT TermContext m ())
 processInput input =
-  case isPrefixOf ":let " input of
-    True -> do let (nameS, termS) = second tail $ break (== '=') $ drop 5 input
-               let name' = strip nameS
-               let term' = strip termS
-               pure (name', term', \term -> modify ((V $ pack name', term):))
-    False -> pure ("_", input, const $ pure ())
+  if ":let " `isPrefixOf` input
+    then do let (nameS, termS) = second tail $ break (== '=') $ drop 5 input
+            let name' = strip nameS
+            pure (name', strip termS, modifyCtx (V $ pack name'))
+    else pure ("_", input, const $ pure ())
 
 repl' :: StateT TermContext (InputT IO) ()
 repl' = do inputMb <- lift $ getInputLine "> "

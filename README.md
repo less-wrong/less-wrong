@@ -29,6 +29,16 @@ is
 ```
 and reduces to
 ```
-id :: ∀(a : *) -> a -> a
-id = λ(a : *) -> λ(x : a) -> x
+idid :: ∀(a : *) -> a -> a
+idid = λ(a : *) -> λ(x : a) -> x
+```
+
+Binding
+-------
+
+You can bind values and types using `:let` command:
+```
+:let Bool = forall (r : *) -> r -> r -> r
+:let True = \(r : *) -> \(t : r) -> \(_ : r) -> t
+:let False = \(r : *) -> \(_ : r) -> \(f : r) -> f
 ```
