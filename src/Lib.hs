@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Lib
     ( repl
     ) where
@@ -22,10 +24,13 @@ import           LessWrong.COC.Type
 
 type TermContext = [(Var, Term)]
 
+construct :: TermContext -> Term -> Term
+construct = flip $ foldl' (\acc (n, t) -> substitute acc n t)
+
 termAndType :: String -> TermContext -> Either CalculusError (Term, Term)
 termAndType txt ctx =
   case parseTerm (pack txt) of
-    Right term' -> do let term = foldl' (\acc (n, t) -> substitute acc n t) term' ctx
+    Right term' -> do let term = construct ctx term'
                       case runExcept (typeOf term) of
                         Right tpe -> pure (reduce term, tpe)
                         Left err  -> Left err

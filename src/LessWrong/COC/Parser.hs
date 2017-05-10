@@ -4,7 +4,7 @@ import           Control.Applicative   (some, (<|>))
 import           Control.Monad         (void)
 import           Data.Text             (Text, pack)
 import           Text.Megaparsec       (between, letterChar, parse,
-                                        parseErrorPretty, spaceChar, try)
+                                        parseErrorPretty, spaceChar, try, eof)
 import           Text.Megaparsec.Lexer (skipBlockComment, skipLineComment,
                                         space)
 import qualified Text.Megaparsec.Lexer as L (lexeme, symbol)
@@ -51,7 +51,7 @@ variable = lexeme (V . pack <$> (some letterChar <|> symbol "_"))
 
 parseTerm :: Text -> Either CalculusError Term
 parseTerm txt =
-  case parse term "(source)" txt of
+  case parse (term <* eof) "(source)" txt of
     Right term -> Right term
     Left  err  -> Left . ParsingError $ parseErrorPretty err
 
@@ -59,25 +59,25 @@ term :: Parser Term
 term = foldl1 App <$> some naturalTerm
 
 naturalTerm :: Parser Term
-naturalTerm = parens term <|> lambdaTerm <|> piTerm <|> varTerm <|> uniTerm
+naturalTerm = lambdaTerm <|> fullPiTerm <|> try simplePiTerm <|> varTerm <|> uniTerm <|> parens term
 
 lambdaTerm :: Parser Term
 lambdaTerm = quaTerm lambda Lam
 
-piTerm :: Parser Term
-piTerm = quaTerm forall Pi
+fullPiTerm :: Parser Term
+fullPiTerm = quaTerm forall Pi
 
 simplePiTerm :: Parser Term
-simplePiTerm = do from <- term
+simplePiTerm = do from <- varTerm <|> uniTerm <|> parens term
                   arrow
-                  to <- try simplePiTerm <|> term
+                  to <- try simplePiTerm <|> varTerm <|> uniTerm <|> term
                   pure $ Pi noname from to
 
 quaTerm :: Parser () -> (Var -> Term -> Term -> Term) -> Parser Term
 quaTerm start f = do start
                      (var, tpe) <- parens $ (,) <$> variable <* delimiter <*> term
                      arrow
-                     body <- try simplePiTerm <|> term
+                     body <- term
                      pure $ f var tpe body
 
 varTerm :: Parser Term

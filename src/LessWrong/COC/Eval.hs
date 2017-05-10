@@ -23,7 +23,7 @@ free term =
     App{..} -> free alg `union` free dat
     Lam{..} -> del
     Pi{..}  -> del
-  where del = delete (var term) $ free (body term)
+  where del = delete (var term) $ free (body term) `union` free (tpe term)
 
 bound :: Term -> Set Var
 bound term =
@@ -34,7 +34,7 @@ bound term =
     Lam{..} -> ins
     Pi{..}  -> ins
   where ins | var term == noname = bound (body term)
-            | otherwise          = var term `insert` bound (body term)
+            | otherwise          = var term `insert` (bound (body term) `union` bound (tpe term))
 
 freshName :: Set Var -> Var
 freshName conflicts = head . dropWhile (`member` conflicts) $ fmap (V . pack) $ primitive ++ numeric
@@ -59,7 +59,7 @@ alpha term conflicts =
             | otherwise   -> Pi var tpe (alpha body conflicts)
     App{..}               -> App (alpha alg conflicts) (alpha dat conflicts)
   where hasConflict = var term `member` conflicts
-        conflicts'  = bound (body term) `union` conflicts
+        conflicts'  = free (body term) `union` free (tpe term) `union` conflicts
         var'        = freshName conflicts'
         body'       = substitute (body term) (var term) (Var var')
 
