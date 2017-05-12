@@ -11,7 +11,7 @@ Examples
 
 ### Booleans
 
-```
+```haskell
 > :let Bool  = forall (a : *) -> a -> a -> a
 Bool :: *
 Bool =  ∀(a : *) -> a -> a -> a
@@ -37,14 +37,14 @@ or =  λ(a : ∀(a : *) -> a -> a -> a) -> a (∀(a : *) -> a -> a -> a) (λ(a :
 
 Now we can play around it.
 **Not**:
-```
+```haskell
 > not true
 _ :: ∀(a : *) -> a -> a -> a                -- Bool
 _ =  λ(a : *) -> λ(_ : a) -> λ(f : a) -> f  -- false
 ```
 
 **And**:
-```
+```haskell
 > and true false
 _ :: ∀(a : *) -> a -> a -> a                -- Bool
 _ =  λ(a : *) -> λ(_ : a) -> λ(f : a) -> f  -- false
@@ -54,7 +54,7 @@ _ =  λ(a : *) -> λ(t : a) -> λ(_ : a) -> t  -- true
 ```
 
 **Or**:
-```
+```haskell
 > or false true
 _ :: ∀(a : *) -> a -> a -> a                -- Bool
 _ =  λ(a : *) -> λ(t : a) -> λ(_ : a) -> t  -- true
@@ -65,7 +65,7 @@ _ =  λ(a : *) -> λ(_ : a) -> λ(f : a) -> f  -- false
 
 ### Lists
 
-```
+```haskell
 > :let List  = \(a : *) -> forall (list : *) -> (a -> list -> list) -> list -> list
 List :: * -> *
 List =  λ(a : *) -> ∀(list : *) -> (a -> list -> list) -> list -> list
@@ -78,7 +78,7 @@ nil =  λ(a : *) -> λ(list : *) -> λ(Cons : a -> list -> list) -> λ(Nil : lis
 ```
 
 And now:
-```
+```haskell
 > cons Bool true (cons Bool false (nil Bool))
 _ :: ∀(list : *) -> ((∀(a : *) -> a -> a -> a) -> list -> list) -> list -> list -- List Bool
 _ =  λ(list : *) -> λ(Cons : (∀(a : *) -> a -> a -> a) -> list -> list) -> λ(Nil : list) -> Cons (λ(a : *) -> λ(t : a) -> λ(_ : a) -> t) (Cons (λ(a : *) -> λ(_ : a) -> λ(f : a) -> f) Nil)
