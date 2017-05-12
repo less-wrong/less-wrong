@@ -1,7 +1,10 @@
 less-wrong
 ==========
 
-I hope one day a nice prover with tactics would be here, but not it is just a simple CoC calulator.
+[![Travis](https://img.shields.io/travis/zmactep/less-wrong.svg)](https://travis-ci.org/zmactep/less-wrong)
+[![license](https://img.shields.io/github/license/zmactep/less-wrong.svg)]()
+
+I hope one day a nice prover with tactics would be here, but now it is just a simple CoC calulator.
 
 Examples
 --------
