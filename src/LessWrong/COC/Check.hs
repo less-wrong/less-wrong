@@ -15,8 +15,7 @@ typeOf :: Term -> Except CalculusError Term
 typeOf = typeWith empty
 
 typeWith :: Context Term -> Term -> Except CalculusError Term
-typeWith _   Const{..} | uni == Star = pure $ Const Box
-                       | otherwise = throwE $ UniverseHasNoType Box
+typeWith _   Uni{..}   = pure $ Uni (axiom uni)
 typeWith ctx Var{..}   = case lookup var ctx of
                            Just tpe -> pure tpe
                            Nothing  -> throwE $ UnknownVariable var
@@ -27,28 +26,35 @@ typeWith ctx Lam{..}   = do let ctx' = insert var tpe ctx
                             pure lamTpe
 typeWith ctx Pi{..}    = do aTpe <- (reduce <$> typeWith ctx tpe) >>= typeConst
                             bTpe <- (reduce <$> typeWith (insert var tpe ctx) body) >>= typeConst
-                            pure $ typeRule aTpe bTpe
-typeWith ctx App{..}   = do algTpe <- reduce <$> typeWith ctx (reduce alg)
+                            pure $ Uni (typeRule aTpe bTpe)
+typeWith ctx App{..}   = do let inctx = inc ctx
+                            algTpe <- reduce <$> typeWith ctx (reduce alg)
                             case algTpe of
                               Pi{..} -> pure ()
                               _      -> throwE $ InvalidType algTpe "not a Pi-type in application algo"
                             datTpe <- reduce <$> typeWith ctx dat
-                            when (tpe algTpe /= datTpe) $
-                              throwE $ CannotEqualize (tpe algTpe) datTpe
+                            unless (datTpe `inctx` tpe algTpe) $
+                              throwE $ CannotEqualize datTpe (tpe algTpe)
                             pure $ substitute (body algTpe) (var algTpe) dat
 
-typeCheck :: Term {- Type -} -> Term {- Term -} -> Except CalculusError ()
-typeCheck tpe term = do tpe' <- typeOf term
-                        when (tpe /= tpe') $
-                          throwE $ CannotEqualize tpe tpe'
-                        pure ()
+typeConst :: Term -> Except CalculusError Uni
+typeConst (Uni x) = pure x
+typeConst a       = throwE $ InvalidType a "non-universe type"
 
-typeConst :: Term -> Except CalculusError Const
-typeConst (Const x) = pure x
-typeConst a         = throwE $ InvalidType a "non-universe type"
+-- |Every object in 'Star' is an object in 'Box'{i}
+--  and every object in 'Box'{i} is an object in 'Box'{j} for every i <= j
+inc :: Context Term -> Term -> Term -> Bool
+inc _   (Uni x) (Uni y)            = x <= y
+inc _   (Var x) (Var y)            = x == y
+inc ctx (Var x) u@Uni{}            = case lookup x ctx of
+                                       Just k  -> inc ctx k u
+                                       Nothing -> False
+inc ctx (App e1 d1) (App e2 d2)    = inc ctx e1 e2 && inc ctx d1 d2
+inc ctx (Pi v t b) (Pi v' t' b')   = inc ctx t t' && inc ctx b (substitute b' v' (Var v))
+inc ctx (Lam v t b) (Lam v' t' b') = inc ctx t t' && inc ctx b (substitute b' v' (Var v))
+inc _   _ _                        = False
 
-typeRule :: Const -> Const -> Term
-typeRule Star Star = Const Star
-typeRule Star Box  = Const Box
-typeRule Box Star  = Const Star
-typeRule Box Box   = Const Box
+typeRule :: Uni -> Uni -> Uni
+typeRule _       Star    = Star
+typeRule Star    uni     = uni
+typeRule (Box i) (Box j) = Box (max i j)

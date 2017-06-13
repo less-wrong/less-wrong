@@ -8,7 +8,7 @@ import           Data.Text          (pack)
 import           LessWrong.COC.Type
 
 instance Eq Term where
-  Const a == Const b         = a == b
+  Uni a == Uni b             = a == b
   Var a == Var b             = a == b
   App a b == App a' b'       = a == a' && b == b'
   Pi v t b == Pi v' t' b'    = t == t' && b == substitute b' v' (Var v)
@@ -18,7 +18,7 @@ instance Eq Term where
 free :: Term -> Set Var
 free term =
   case term of
-    Const{} -> empty
+    Uni{} -> empty
     Var{..} -> singleton var
     App{..} -> free alg `union` free dat
     Lam{..} -> del
@@ -28,7 +28,7 @@ free term =
 bound :: Term -> Set Var
 bound term =
   case term of
-    Const{} -> empty
+    Uni{} -> empty
     Var{}   -> empty
     App{..} -> bound alg `union` bound dat
     Lam{..} -> ins
@@ -51,7 +51,7 @@ reduce term | beta term == term = eta term
 alpha :: Term -> Set Var -> Term
 alpha term conflicts =
   case term of
-    Const{}               -> term
+    Uni{}                 -> term
     Var{}                 -> term
     Lam{..} | hasConflict -> Lam var' tpe body'
             | otherwise   -> Lam var tpe (alpha body conflicts)
@@ -66,7 +66,7 @@ alpha term conflicts =
 beta :: Term -> Term
 beta term =
   case term of
-    Const{} -> term
+    Uni{}   -> term
     Var{}   -> term
     App{..} -> case alg of
                  Lam{..} -> substitute body var dat
@@ -87,10 +87,10 @@ beta term =
 eta :: Term -> Term
 eta term =
   case term of
-    Const{} -> term
+    Uni{}   -> term
     Var{}   -> term
     Lam{..} -> case body of
-                 App alg (Var x) | x == var && x `notMember` free alg -> alg
+                 App alg (Var x) | x == var && x `notMember` free alg -> eta alg
                  _ -> Lam var (eta tpe) (eta body)
     Pi{..}  -> Pi  var (eta tpe) (eta body)
     App{..} -> App (eta alg) (eta dat)
@@ -98,7 +98,7 @@ eta term =
 substitute :: Term -> Var -> Term -> Term -- a[x := b]
 substitute a x b =
   case a of
-    Const{..}           -> a
+    Uni{..}             -> a
     Var{..} | var == x  -> b
             | otherwise -> a
     App{..}             -> App (substitute alg x b) (substitute dat x b)

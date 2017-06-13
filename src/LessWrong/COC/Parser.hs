@@ -3,8 +3,8 @@ module LessWrong.COC.Parser where
 import           Control.Applicative   (some, (<|>))
 import           Control.Monad         (void)
 import           Data.Text             (Text, pack)
-import           Text.Megaparsec       (between, letterChar, parse,
-                                        parseErrorPretty, spaceChar, try, eof)
+import           Text.Megaparsec       (between, digitChar, eof, letterChar,
+                                        parse, parseErrorPretty, spaceChar, try)
 import           Text.Megaparsec.Lexer (skipBlockComment, skipLineComment,
                                         space)
 import qualified Text.Megaparsec.Lexer as L (lexeme, symbol)
@@ -38,8 +38,10 @@ lambda = void $ symbol "\\" <|> symbol "lambda" <|> symbol "λ"
 forall :: Parser ()
 forall = void $ symbol "\\/" <|> symbol "forall" <|> symbol "∀" <|> symbol "π"
 
-uni :: Parser Const
-uni = (symbol "*" >> pure Star) <|> ((symbol "☐" <|> symbol "[]") >> pure Box)
+uni :: Parser Uni
+uni = ((symbol "☐-" <|> symbol "[]-") >> some digitChar >>= pure . Box . read) <|>
+      ((symbol "☐" <|> symbol "[]") >> pure (Box 1)) <|>
+      (symbol "*" >> pure Star)
 
 delimiter :: Parser ()
 delimiter = void $ symbol ":"
@@ -84,4 +86,4 @@ varTerm :: Parser Term
 varTerm = Var <$> variable
 
 uniTerm :: Parser Term
-uniTerm = Const <$> uni
+uniTerm = Uni <$> uni

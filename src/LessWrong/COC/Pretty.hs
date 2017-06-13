@@ -1,20 +1,21 @@
 {-# LANGUAGE RecordWildCards #-}
 module LessWrong.COC.Pretty where
 
-import Data.Set (notMember)
-import Data.Text
-import LessWrong.COC.Type
-import LessWrong.COC.Eval
+import           Data.Set           (notMember)
+import           Data.Text
+import           LessWrong.COC.Eval
+import           LessWrong.COC.Type
 
 pretty :: Term -> String
-pretty (Const Star) = "*"
-pretty (Const Box)  = "☐"
-pretty (Var (V x))  = unpack x
-pretty Lam{..}      = "λ(" ++ pretty (Var var) ++ " : " ++ pretty tpe ++ ") -> " ++ pretty body
-pretty Pi{..}       = prettyPi var tpe body
-pretty App{..}      = pretty alg ++ " " ++ prettyDat
+pretty (Uni Star)    = "*"
+pretty (Uni (Box i)) | i == 1    = "◻"
+                     | otherwise = "◻-" ++ show i
+pretty (Var (V x))   = unpack x
+pretty Lam{..}       = "λ(" ++ pretty (Var var) ++ " : " ++ pretty tpe ++ ") -> " ++ pretty body
+pretty Pi{..}        = prettyPi var tpe body
+pretty App{..}       = pretty alg ++ " " ++ prettyDat
   where prettyDat = case dat of
-                      Const{} -> pretty dat
+                      Uni{}   -> pretty dat
                       Var{}   -> pretty dat
                       _       -> "(" ++ pretty dat ++ ")"
 
