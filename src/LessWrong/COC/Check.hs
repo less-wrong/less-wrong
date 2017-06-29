@@ -27,7 +27,7 @@ typeWith ctx Lam{..}   = do let ctx' = insert var tpe ctx
 typeWith ctx Pi{..}    = do aTpe <- (reduce <$> typeWith ctx tpe) >>= typeConst
                             bTpe <- (reduce <$> typeWith (insert var tpe ctx) body) >>= typeConst
                             pure $ Uni (typeRule aTpe bTpe)
-typeWith ctx App{..}   = do let inctx = inc ctx
+typeWith ctx App{..}   = do let inctx = inclusion ctx
                             algTpe <- reduce <$> typeWith ctx (reduce alg)
                             case algTpe of
                               Pi{..} -> pure ()
@@ -37,22 +37,22 @@ typeWith ctx App{..}   = do let inctx = inc ctx
                               throwE $ CannotEqualize datTpe (tpe algTpe)
                             pure $ substitute (body algTpe) (var algTpe) dat
 
+-- |Every object of 'Star' is an object of 'Box'{i}
+--  and every object of 'Box'{i} is an object of 'Box'{j} for every i <= j
+inclusion :: Context Term -> Term -> Term -> Bool
+inclusion _   (Uni x) (Uni y)            = x <= y
+inclusion _   (Var x) (Var y)            = x == y
+inclusion ctx (Var x) u@Uni{}            = case lookup x ctx of
+                                             Just k  -> inclusion ctx k u
+                                             Nothing -> False
+inclusion ctx (App e1 d1) (App e2 d2)    = inclusion ctx e1 e2 && inclusion ctx d1 d2
+inclusion ctx (Pi v t b) (Pi v' t' b')   = inclusion ctx t t' && inclusion ctx b (substitute b' v' (Var v))
+inclusion ctx (Lam v t b) (Lam v' t' b') = inclusion ctx t t' && inclusion ctx b (substitute b' v' (Var v))
+inclusion _   _ _                        = False
+
 typeConst :: Term -> Except CalculusError Uni
 typeConst (Uni x) = pure x
 typeConst a       = throwE $ InvalidType a "non-universe type"
-
--- |Every object in 'Star' is an object in 'Box'{i}
---  and every object in 'Box'{i} is an object in 'Box'{j} for every i <= j
-inc :: Context Term -> Term -> Term -> Bool
-inc _   (Uni x) (Uni y)            = x <= y
-inc _   (Var x) (Var y)            = x == y
-inc ctx (Var x) u@Uni{}            = case lookup x ctx of
-                                       Just k  -> inc ctx k u
-                                       Nothing -> False
-inc ctx (App e1 d1) (App e2 d2)    = inc ctx e1 e2 && inc ctx d1 d2
-inc ctx (Pi v t b) (Pi v' t' b')   = inc ctx t t' && inc ctx b (substitute b' v' (Var v))
-inc ctx (Lam v t b) (Lam v' t' b') = inc ctx t t' && inc ctx b (substitute b' v' (Var v))
-inc _   _ _                        = False
 
 typeRule :: Uni -> Uni -> Uni
 typeRule _       Star    = Star

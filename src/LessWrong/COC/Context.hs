@@ -5,6 +5,7 @@ import           Prelude            hiding (lookup)
 import qualified Prelude            as P (lookup)
 
 newtype Context a = Context { getCtx :: [(Var, a)] }
+  deriving (Show, Eq, Ord)
 
 empty :: Context a
 empty = Context []

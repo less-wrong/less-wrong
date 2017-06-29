@@ -4,7 +4,27 @@ less-wrong
 [![Travis](https://img.shields.io/travis/zmactep/less-wrong.svg)](https://travis-ci.org/zmactep/less-wrong)
 [![license](https://img.shields.io/github/license/zmactep/less-wrong.svg)]()
 
-I hope one day a nice prover with tactics would be here, but now it is just a simple CoC calulator.
+I hope one day a nice prover with tactics would be here, but now it is just a simple CoC calululator with one impredicative universe `*` and an infinity set of cumulative `◻-#i` universes. So, LW has these two axioms (I use `◻` for `◻-1`):
+```
+* : ◻
+◻-i : ◻-i+1
+```
+
+By the cumulative principal all terms can be presented in higher order universes too:
+```haskell
+> :let id = \(a : ◻) -> a
+id :: ◻ -> ◻
+id =  λ(a : ◻) -> a
+> \(a : ◻) -> id a
+_ :: ◻ -> ◻
+_ =  λ(a : ◻) -> a
+> \(a : *) -> id a
+_ :: * -> ◻
+_ =  λ(a : *) -> a
+> \(a : *) -> \(x : a) -> id x
+_ :: ∀(a : *) -> a -> ◻
+_ =  λ(a : *) -> λ(x : a) -> x
+```
 
 Examples
 --------
@@ -36,6 +56,7 @@ or =  λ(a : ∀(a : *) -> a -> a -> a) -> a (∀(a : *) -> a -> a -> a) (λ(a :
 ```
 
 Now we can play around it.
+
 **Not**:
 ```haskell
 > not true

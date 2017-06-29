@@ -1,10 +1,12 @@
+{-# LANGUAGE TupleSections #-}
 module LessWrong.COC.Parser where
 
 import           Control.Applicative   (some, (<|>))
-import           Control.Monad         (void)
+import           Control.Monad         (void, when)
 import           Data.Text             (Text, pack)
 import           Text.Megaparsec       (between, digitChar, eof, letterChar,
-                                        parse, parseErrorPretty, spaceChar, try)
+                                        parse, parseErrorPretty, spaceChar, try,
+                                        upperChar)
 import           Text.Megaparsec.Lexer (skipBlockComment, skipLineComment,
                                         space)
 import qualified Text.Megaparsec.Lexer as L (lexeme, symbol)
@@ -33,10 +35,10 @@ arrow :: Parser ()
 arrow = void $ symbol "->" <|> symbol "."
 
 lambda :: Parser ()
-lambda = void $ symbol "\\" <|> symbol "lambda" <|> symbol "λ"
+lambda = void $ symbol "lambda" <|> symbol "\\" <|> symbol "λ"
 
 forall :: Parser ()
-forall = void $ symbol "\\/" <|> symbol "forall" <|> symbol "∀" <|> symbol "π"
+forall = void $ symbol "forall" <|> symbol "∀" <|> symbol "π"
 
 uni :: Parser Uni
 uni = ((symbol "☐-" <|> symbol "[]-") >> some digitChar >>= pure . Box . read) <|>
@@ -47,7 +49,13 @@ delimiter :: Parser ()
 delimiter = void $ symbol ":"
 
 variable :: Parser Var
-variable = lexeme (V . pack <$> (some letterChar <|> symbol "_"))
+variable = (V . pack <$>) . lexeme . try $ (some letterChar >>= check) <|> symbol "_"
+  where check x = do when (x `elem` reserved) $
+                       fail $ "keyword '" ++ x ++ "' cannot be a variable name"
+                     pure x
+
+reserved :: [String]
+reserved = ["lambda", "forall"]
 
 -- Parser
 
@@ -58,30 +66,37 @@ parseTerm txt =
     Left  err  -> Left . ParsingError $ parseErrorPretty err
 
 term :: Parser Term
-term = foldl1 App <$> some naturalTerm
+term = try applicationTerm <|> naturalTerm
+
+applicationTerm :: Parser Term
+applicationTerm = do alg <- naturalTerm
+                     dat <- some nonArrowTerm
+                     pure $ foldl App alg dat
 
 naturalTerm :: Parser Term
-naturalTerm = lambdaTerm <|> fullPiTerm <|> try simplePiTerm <|> varTerm <|> uniTerm <|> parens term
+naturalTerm = try arrowTerm <|> nonArrowTerm
+
+arrowTerm :: Parser Term
+arrowTerm = Pi noname <$> arrowTpe <* arrow <*> term
+
+nonArrowTerm :: Parser Term
+nonArrowTerm = lambdaTerm <|> piTerm <|> varTerm <|> uniTerm <|> parens term
 
 lambdaTerm :: Parser Term
 lambdaTerm = quaTerm lambda Lam
 
-fullPiTerm :: Parser Term
-fullPiTerm = quaTerm forall Pi
+piTerm :: Parser Term
+piTerm = quaTerm forall Pi
 
-simplePiTerm :: Parser Term
-simplePiTerm = do from <- varTerm <|> uniTerm <|> parens term
-                  arrow
-                  to <- try simplePiTerm <|> varTerm <|> uniTerm <|> term
-                  pure $ Pi noname from to
+arrowTpe :: Parser Term
+arrowTpe = varTerm <|> uniTerm <|> parens term
 
 quaTerm :: Parser () -> (Var -> Term -> Term -> Term) -> Parser Term
-quaTerm start f = do start
-                     (var, tpe) <- parens $ (,) <$> variable <* delimiter <*> term
-                     arrow
-                     body <- term
-                     pure $ f var tpe body
-
+quaTerm start cons = do (var, tpe) <- start *> parens ((,) <$> variable <* delimiter <*> term)
+                        arrow
+                        body <- term
+                        pure $ cons var tpe body
+                        
 varTerm :: Parser Term
 varTerm = Var <$> variable
 
