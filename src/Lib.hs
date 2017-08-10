@@ -61,7 +61,7 @@ process (DECL (Ind decl)) = do
   let tpeBT            = BT (bindingName t) (construct ctx $ bindingTerm t)
   let ctxT             = newCtx ctx (V $ bindingName tpeBT) (bindingTerm tpeBT)
   let (ctxTC, consBTs) = foldl (\(ctx', lst') bt -> second (:lst') $ btByCtx bt ctx') (ctxT, []) cs
-  storeDecl (Decl tpeBT consBTs) ctxTC
+  storeDecl (Decl tpeBT (reverse consBTs)) ctxTC
 
 storeDecl :: Decl -> TermContext -> StateT TermContext (InputT IO) ()
 storeDecl (Decl t cs) ctx =

@@ -26,8 +26,61 @@ _ :: ∀(a : *) -> a -> ◻
 _ =  λ(a : *) -> λ(x : a) -> x
 ```
 
+Inductive types
+---------------
+
+`less-wrong` supports inductive types by Church-Berrarduci-Boehm encoding to pure CoC:
+
+### Booleans
+
+``` haskell
+> inductive Bool = (True : Bool) (False : Bool)
+Bool :: *
+Bool =  ∀(Bool : *) -> Bool -> Bool -> Bool
+True :: ∀(Bool : *) -> Bool -> Bool -> Bool
+True =  λ(Bool : *) -> λ(True : Bool) -> λ(False : Bool) -> True
+False :: ∀(Bool : *) -> Bool -> Bool -> Bool
+False =  λ(Bool : *) -> λ(True : Bool) -> λ(False : Bool) -> False
+```
+
+### Nat
+
+``` haskell
+> inductive Nat = (Zero : Nat) (Succ : Nat -> Nat)
+Nat :: *
+Nat =  ∀(Nat : *) -> Nat -> (Nat -> Nat) -> Nat
+Zero :: ∀(Nat : *) -> Nat -> (Nat -> Nat) -> Nat
+Zero =  λ(Nat : *) -> λ(Zero : Nat) -> λ(Succ : Nat -> Nat) -> Zero
+Succ :: (∀(Nat : *) -> Nat -> (Nat -> Nat) -> Nat) -> ∀(Nat : *) -> Nat -> (Nat -> Nat) -> Nat
+Succ =  λ(a : ∀(Nat : *) -> Nat -> (Nat -> Nat) -> Nat) -> λ(Nat : *) -> λ(Zero : Nat) -> λ(Succ : Nat -> Nat) -> Succ (a Nat Zero Succ)
+```
+
+### Maybe
+
+``` haskell
+> inductive Maybe (a : *) = (Nothing : Maybe a) (Just : a -> Maybe a)
+Maybe :: * -> *
+Maybe =  λ(a : *) -> ∀(Maybe : * -> *) -> Maybe a -> (a -> Maybe a) -> Maybe a
+Nothing :: ∀(a : *) -> ∀(Maybe : * -> *) -> Maybe a -> (a -> Maybe a) -> Maybe a
+Nothing =  λ(a : *) -> λ(Maybe : * -> *) -> λ(Nothing : Maybe a) -> λ(Just : a -> Maybe a) -> Nothing
+Just :: ∀(a : *) -> a -> ∀(Maybe : * -> *) -> Maybe a -> (a -> Maybe a) -> Maybe a
+Just =  λ(a : *) -> λ(b : a) -> λ(Maybe : * -> *) -> λ(Nothing : Maybe a) -> λ(Just : a -> Maybe a) -> Just b
+```
+
+### Eq
+
+``` haskell
+> inductive Eq (A : *) (a : A) (b : A) = (Refl : forall (x : A) -> Eq A x x)
+Eq :: ∀(A : *) -> A -> A -> *
+Eq =  λ(A : *) -> λ(a : A) -> λ(b : A) -> ∀(Eq : ∀(A : *) -> A -> A -> *) -> (∀(x : A) -> Eq A x x) -> Eq A a b
+Refl :: ∀(A : *) -> ∀(x : A) -> ∀(Eq : ∀(A : *) -> A -> A -> *) -> (∀(x : A) -> Eq A x x) -> Eq A x x
+Refl =  λ(A : *) -> λ(x : A) -> λ(Eq : ∀(A : *) -> A -> A -> *) -> λ(Refl : ∀(x : A) -> Eq A x x) -> Refl x
+```
+
 Examples
 --------
+
+You can also write any type or function in pure CoC:
 
 ### Booleans
 
