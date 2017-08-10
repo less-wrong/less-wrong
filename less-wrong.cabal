@@ -23,9 +23,10 @@ library
                      , LessWrong.COC.Check
                      , LessWrong.COC.Parser
                      , LessWrong.COC.Pretty
-                     , LessWrong.HL.Type
                      , LessWrong.HL.Encoding
+                     , LessWrong.HL.Type
                      , LessWrong.HL.Parser
+                     , LessWrong.HL.Parser.Type
   build-depends:       base >= 4.7 && < 5
                      , text
                      , megaparsec

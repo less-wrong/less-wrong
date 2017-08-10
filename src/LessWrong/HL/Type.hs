@@ -1,32 +1,20 @@
 module LessWrong.HL.Type where
 
-import           Control.Applicative   (liftA2)
+import LessWrong.COC.Type (Name, Term)
+import LessWrong.COC.Eval ()
 
-import           LessWrong.COC.Context (Context (..))
-import           LessWrong.COC.Eval    ()
-import           LessWrong.COC.Type    (Name, Term (..), Var (..))
-
-data Inductive = Inductive { indName   :: Name
-                           , indParams :: Context Term
-                           , indConses :: Context Term
-                           }
+data BoundTerm = BT { bindingName :: Name
+                    , bindingTerm :: Term
+                    }
   deriving (Show, Eq)
 
-data TypeApp = TVar Name
-             | TApp TypeApp TypeApp
-  deriving (Show, Read, Eq, Ord)
-
-data Algebraic = Algebraic { algName   :: Name
-                           , algParams :: [Name]
-                           , algConses :: Context [TypeApp]
-                           }
+data Decl = Decl { typeBinding   :: BoundTerm
+                 , consesBinding :: [BoundTerm]
+                 }
   deriving (Show, Eq)
 
-data Record = Record { recName   :: Name
-                     , recParams :: Context Term
-                     , recConses :: Context Term
-                     }
-  deriving (Show, Eq)
-
-data Declaration = Ind Inductive | Alg Algebraic | Rec Record
+data FuncDecl = FuncDecl { funcName :: Name
+                         , funcType :: Term
+                         , funcTerm :: Term
+                         }
   deriving (Show, Eq)

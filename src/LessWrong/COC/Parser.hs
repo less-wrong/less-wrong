@@ -40,10 +40,10 @@ lambda = void $ symbol "lambda" <|> symbol "\\" <|> symbol "λ"
 forall :: Parser ()
 forall = void $ symbol "forall" <|> symbol "∀" <|> symbol "π"
 
-uni :: Parser Uni
-uni = ((symbol "☐-" <|> symbol "[]-") >> some digitChar >>= pure . Box . read) <|>
-      ((symbol "☐" <|> symbol "[]") >> pure (Box 1)) <|>
-      (symbol "*" >> pure Star)
+universe :: Parser Uni
+universe = ((symbol "☐-" <|> symbol "[]-") >> some digitChar >>= pure . Box . read) <|>
+           ((symbol "☐" <|> symbol "[]") >> pure (Box 1)) <|>
+           (symbol "*" >> pure Star)
 
 delimiter :: Parser ()
 delimiter = void $ symbol ":"
@@ -55,7 +55,7 @@ variable = (V . pack <$>) . lexeme . try $ (some letterChar >>= check) <|> symbo
                      pure x
 
 reserved :: [String]
-reserved = ["lambda", "forall"]
+reserved = ["lambda", "forall", "inductive", "record", "data"]
 
 -- Parser
 
@@ -101,4 +101,4 @@ varTerm :: Parser Term
 varTerm = Var <$> variable
 
 uniTerm :: Parser Term
-uniTerm = Uni <$> uni
+uniTerm = Uni <$> universe

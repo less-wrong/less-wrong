@@ -2,6 +2,7 @@
 
 module LessWrong.COC.Eval where
 
+import           Prelude hiding     (length)
 import           Data.Set           (Set, delete, empty, insert, member,
                                      notMember, singleton, union)
 import           Data.Text          (pack)
