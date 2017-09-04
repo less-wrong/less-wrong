@@ -1,8 +1,8 @@
 less-wrong
 ==========
 
-[![Travis](https://img.shields.io/travis/zmactep/less-wrong.svg)](https://travis-ci.org/zmactep/less-wrong)
-[![license](https://img.shields.io/github/license/zmactep/less-wrong.svg)]()
+[![Travis](https://img.shields.io/travis/less-wrong/less-wrong.svg)](https://travis-ci.org/less-wrong/less-wrong)
+[![license](https://img.shields.io/github/license/less-wrong/less-wrong.svg)]()
 
 I hope one day a nice prover with tactics would be here, but now it is just a simple CoC calululator with one impredicative universe `*` and an infinity set of cumulative `◻-#i` universes. So, LW has these two axioms (I use `◻` for `◻-1`):
 ```
